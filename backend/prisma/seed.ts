@@ -1,14 +1,24 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
 const SEED_EVENT_ID = "11111111-1111-1111-1111-111111111111";
 
 async function main() {
-  const adapter = new PrismaPg({
-    connectionString: process.env["DATABASE_URL"]!,
+  const rawUrl = process.env["DATABASE_URL"]!;
+  const secureUrl = rawUrl.includes("sslmode=")
+    ? rawUrl
+    : rawUrl.includes("?")
+      ? `${rawUrl}&sslmode=require`
+      : `${rawUrl}?sslmode=require`;
+
+  const pool = new pg.Pool({
+    connectionString: secureUrl,
     ssl: { rejectUnauthorized: false },
   });
+
+  const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
   try {
