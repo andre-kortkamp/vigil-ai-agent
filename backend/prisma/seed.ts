@@ -5,7 +5,10 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const SEED_EVENT_ID = "11111111-1111-1111-1111-111111111111";
 
 async function main() {
-  const adapter = new PrismaPg(process.env["DATABASE_URL"]!);
+  const adapter = new PrismaPg({
+    connectionString: process.env["DATABASE_URL"]!,
+    ssl: { rejectUnauthorized: false },
+  });
   const prisma = new PrismaClient({ adapter });
 
   try {
