@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service'; // Ajuste o path se necessário
+import { PrismaService } from '../../prisma/prisma.service';
+import { FunnelStatus } from '@prisma/client';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { tool } from '@langchain/core/tools';
 import {
@@ -13,7 +14,7 @@ import { z } from 'zod';
 
 @Injectable()
 export class AgentService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async processarMensagem(
     leadId: string,
@@ -134,6 +135,131 @@ Responda de forma concisa, corporativa, mas amigável.`,
     });
 
     return textoResposta;
+  }
+
+  async gerarMensagemProativa(
+    leadId: string,
+    faseRegua: 'D-3' | 'D-1' | 'D+1',
+  ): Promise<{ mensagem: string; leadId: string }> {
+    const lead = await this.prisma.lead.findUnique({
+      where: { id: leadId },
+      include: { event: true },
+    });
+    if (!lead) {
+      throw new NotFoundException(`Lead ${leadId} não encontrado`);
+    }
+
+    const model = new ChatAnthropic({
+      model: 'claude-3-5-sonnet-20241022',
+      temperature: 0.7,
+    });
+
+    const prompt = this.montarPromptRegua(lead, faseRegua);
+
+    const resposta = await model.invoke([
+      new SystemMessage(prompt),
+      new HumanMessage(
+        'Gere APENAS a mensagem final para o lead. Nada de introduções, explicações ou metadados. Apenas o texto que será enviado.',
+      ),
+    ]);
+
+    const textoMensagem = this.extrairTextoConteudo(resposta.content);
+
+    await this.prisma.interaction.create({
+      data: {
+        leadId,
+        tipo: 'MENSAGEM_ENVIADA',
+        origem: 'agent_claude',
+        conteudo: textoMensagem,
+        metadata: { faseRegua },
+      },
+    });
+
+    await this.atualizarStatusRegua(lead, faseRegua);
+
+    return { mensagem: textoMensagem, leadId };
+  }
+
+  private montarPromptRegua(
+    lead: {
+      nome: string;
+      cargo: string | null;
+      empresa: string | null;
+      setor: string | null;
+      status: string;
+      event?: { nome: string; dataEvento: Date | null } | null;
+    },
+    faseRegua: 'D-3' | 'D-1' | 'D+1',
+  ): string {
+    const nome = lead.nome;
+    const cargo = lead.cargo ?? 'Executivo';
+    const empresa = lead.empresa ?? 'sua empresa';
+    const setor = lead.setor ?? 'tecnologia';
+    const eventoNome = lead.event?.nome ?? 'Vigil Summit';
+
+    const prompts: Record<string, string> = {
+      'D-3': `Você é o agente autônomo da Vigil.AI especializado em engajamento pré-evento.
+ESTAMOS NA RÉGUA D-3: Faltam 3 dias para o ${eventoNome}.
+
+Seu objetivo: criar ANTECIPAÇÃO e RELEVÂNCIA.
+- Mencione que falta pouco para o ${eventoNome}
+- Personalize com o cargo do lead (${cargo}) e setor (${setor})
+- Destaque um tema do evento relevante para o perfil dele (ex: LGPD, vazamento de dados, ISO 27001)
+- NÃO peça confirmação agora — apenas gere expectativa
+- Tom: entusiasmado mas corporativo
+
+Lead: ${nome}, ${cargo} na ${empresa} (setor: ${setor}).
+Responda APENAS com a mensagem final para o lead.`,
+
+      'D-1': `Você é o agente autônomo da Vigil.AI especializado em confirmação de presença.
+ESTAMOS NA RÉGUA D-1: Véspera do ${eventoNome}. O evento é AMANHÃ.
+
+Seu objetivo: CONFIRMAR PRESENÇA e REDUZIR NO-SHOW.
+- Reforce que o ${eventoNome} é amanhã
+- Peça explicitamente que ele confirme presença
+- Mencione detalhes práticos (horário, local — invente se necessário)
+- Crie senso de urgência (vagas limitadas, networking exclusivo)
+- Tom: direto e profissional
+
+Lead: ${nome}, ${cargo} na ${empresa} (setor: ${setor}).
+Responda APENAS com a mensagem final para o lead.`,
+
+      'D+1': `Você é o agente autônomo da Vigil.AI especializado em follow-up comercial pós-evento.
+ESTAMOS NA RÉGUA D+1: O ${eventoNome} aconteceu ONTEM.
+
+Seu objetivo: AGENDAR UMA REUNIÃO COMERCIAL para apresentar a plataforma Vigil.AI.
+- Agradeça pela presença no ${eventoNome} (se o lead estava presente)
+- Referencie temas do evento que conectam com o perfil dele (${cargo}, ${setor})
+- Ofereça uma demonstração personalizada da plataforma
+- Sugira ativamente agendar uma reunião
+- Se o lead NÃO compareceu, ofereça um resumo exclusivo e convide para uma demo privada
+- Tom: consultivo e orientado a valor
+
+Lead: ${nome}, ${cargo} na ${empresa} (setor: ${setor}).
+Responda APENAS com a mensagem final para o lead.`,
+    };
+
+    return prompts[faseRegua];
+  }
+
+  private async atualizarStatusRegua(
+    lead: { id: string; status: string },
+    faseRegua: 'D-3' | 'D-1' | 'D+1',
+  ): Promise<void> {
+    const transicoes: Record<string, Record<string, FunnelStatus>> = {
+      ENRIQUECIDO: { 'D-3': 'ENGAGED_PRE' },
+      ENGAGED_PRE: { 'D-1': 'ENGAGED_PRE' },
+      CONFIRMADO: { 'D+1': 'NO_SHOW' },
+      PRESENTE: { 'D+1': 'ENGAGED_POS' },
+    };
+
+    const novoStatus = transicoes[lead.status]?.[faseRegua];
+    if (novoStatus) {
+      await this.prisma.lead.update({
+        where: { id: lead.id },
+        data: { status: novoStatus },
+      });
+    }
   }
 
   /**

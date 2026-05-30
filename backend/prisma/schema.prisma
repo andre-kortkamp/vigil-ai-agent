@@ -10,12 +10,13 @@ datasource db {
 // TABELA 0: EVENTOS
 // ==========================================
 model Event {
-  id              String   @id @default(uuid())
-  nome            String   // Ex: Vigil Summit SP
-  publicoAlvo     String?  // Ex: Manufatura, Saúde, Financeiro
+  id              String    @id @default(uuid())
+  nome            String    // Ex: Vigil Summit SP
+  publicoAlvo     String?   // Ex: Manufatura, Saúde, Financeiro
+  dataEvento      DateTime? // Data do evento (essencial para régua D-3, D-1, D+1)
   
   leads           Lead[]
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
 }
 
 // ==========================================
