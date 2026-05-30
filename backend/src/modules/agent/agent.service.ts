@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FunnelStatus } from '@prisma/client';
 import { ChatAnthropic } from '@langchain/anthropic';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { tool } from '@langchain/core/tools';
 import {
   HumanMessage,
@@ -37,12 +38,8 @@ export class AgentService {
       },
     });
 
-    // 3. Inicializa o Claude (usando as chaves nativas do LangChain)
-    const model = new ChatAnthropic({
-      model: 'claude-3-5-sonnet-20241022',
-      temperature: 0.7,
-      // A chave é puxada automaticamente do process.env.ANTHROPIC_API_KEY
-    });
+    // 3. Inicializa o modelo via Factory (Anti Vendor Lock-in)
+    const model = this.getLLM();
 
     // 4. Define as Ferramentas (Tools)
     const agendarReuniao = tool(
@@ -149,10 +146,7 @@ Responda de forma concisa, corporativa, mas amigável.`,
       throw new NotFoundException(`Lead ${leadId} não encontrado`);
     }
 
-    const model = new ChatAnthropic({
-      model: 'claude-3-5-sonnet-20241022',
-      temperature: 0.7,
-    });
+    const model = this.getLLM();
 
     const prompt = this.montarPromptRegua(lead, faseRegua);
 
@@ -260,6 +254,26 @@ Responda APENAS com a mensagem final para o lead.`,
         data: { status: novoStatus },
       });
     }
+  }
+
+  /**
+   * Factory de LLM: retorna o modelo apropriado conforme LLM_PROVIDER.
+   * Evita Vendor Lock-in — alterna entre Anthropic (Claude) e Google (Gemini) via variável de ambiente.
+   */
+  private getLLM() {
+    const provider = process.env.LLM_PROVIDER ?? 'anthropic';
+
+    if (provider === 'gemini') {
+      return new ChatGoogleGenerativeAI({
+        model: 'gemini-2.5-flash',
+        temperature: 0.7,
+      });
+    }
+
+    return new ChatAnthropic({
+      model: 'claude-3-5-sonnet-20241022',
+      temperature: 0.7,
+    });
   }
 
   /**
