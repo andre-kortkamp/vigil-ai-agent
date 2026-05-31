@@ -145,7 +145,7 @@ Responda de forma concisa, corporativa, mas amigável.`,
   async gerarMensagemProativa(
     leadId: string,
     faseRegua: 'D-3' | 'D-1' | 'D+1',
-  ): Promise<{ mensagem: string; leadId: string }> {
+  ): Promise<{ mensagem: string; leadId: string; telegramChatId: string | null }> {
     const lead = await this.prisma.lead.findUnique({
       where: { id: leadId },
       include: { event: true },
@@ -179,7 +179,7 @@ Responda de forma concisa, corporativa, mas amigável.`,
 
     await this.atualizarStatusRegua(lead, faseRegua);
 
-    return { mensagem: textoMensagem, leadId };
+    return { mensagem: textoMensagem, leadId, telegramChatId: lead.telefone };
   }
 
   private montarPromptRegua(

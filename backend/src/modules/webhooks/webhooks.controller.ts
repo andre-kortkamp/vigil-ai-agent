@@ -119,7 +119,7 @@ export class WebhooksController {
   @HttpCode(HttpStatus.OK)
   async dispararCampanha(
     @Body() dto: CampanhaWebhookDto,
-  ): Promise<{ resultados: Array<{ leadId: string; mensagem: string }> }> {
+  ): Promise<{ resultados: Array<{ leadId: string; mensagem: string; telegramChatId: string | null }> }> {
     if (dto.leadId) {
       const resultado = await this.agentService.gerarMensagemProativa(
         dto.leadId,
