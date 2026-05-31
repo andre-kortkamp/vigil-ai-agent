@@ -33,6 +33,7 @@ export class WebhooksController {
       dto.leadId,
       dto.mensagemUsuario,
       dto.origem,
+      dto.telegramChatId,
     );
     return { resposta };
   }

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class MensagemWebhookDto {
   @IsString()
@@ -12,4 +12,8 @@ export class MensagemWebhookDto {
   @IsString()
   @IsNotEmpty()
   origem: string;
+
+  @IsOptional()
+  @IsString()
+  telegramChatId?: string;
 }

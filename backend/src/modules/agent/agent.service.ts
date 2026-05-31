@@ -21,11 +21,19 @@ export class AgentService {
     leadId: string,
     mensagemUsuario: string,
     origem: string,
+    telegramChatId?: string,
   ): Promise<string> {
     // 1. Verifica o Lead
     const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
     if (!lead) {
       throw new NotFoundException(`Lead ${leadId} não encontrado`);
+    }
+
+    if (telegramChatId) {
+      await this.prisma.lead.update({
+        where: { id: leadId },
+        data: { telefone: telegramChatId },
+      });
     }
 
     // 2. Salva a mensagem recebida no banco
