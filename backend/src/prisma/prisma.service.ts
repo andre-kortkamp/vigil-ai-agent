@@ -15,21 +15,15 @@ export class PrismaService
       throw new Error('DATABASE_URL não está definida no ambiente');
     }
 
-    const secureUrl = rawUrl.includes('sslmode=')
-      ? rawUrl
-      : rawUrl.includes('?')
-        ? `${rawUrl}&sslmode=require`
-        : `${rawUrl}?sslmode=require`;
-
     const pool = new pg.Pool({
-      connectionString: secureUrl,
+      connectionString: rawUrl,
       ssl: { rejectUnauthorized: false },
     });
 
     const adapter = new PrismaPg(pool);
     super({ adapter });
 
-    const masked = secureUrl.replace(/\/\/(.+):(.+)@/, '//$1:***@');
+    const masked = rawUrl.replace(/\/\/(.+):(.+)@/, '//$1:***@');
     this.logger.log(`[DEBUG] Conectando ao banco: ${masked}`);
   }
 

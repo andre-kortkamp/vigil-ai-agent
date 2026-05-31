@@ -7,14 +7,9 @@ const SEED_EVENT_ID = "11111111-1111-1111-1111-111111111111";
 
 async function main() {
   const rawUrl = process.env["DATABASE_URL"]!;
-  const secureUrl = rawUrl.includes("sslmode=")
-    ? rawUrl
-    : rawUrl.includes("?")
-      ? `${rawUrl}&sslmode=require`
-      : `${rawUrl}?sslmode=require`;
 
   const pool = new pg.Pool({
-    connectionString: secureUrl,
+    connectionString: rawUrl,
     ssl: { rejectUnauthorized: false },
   });
 
