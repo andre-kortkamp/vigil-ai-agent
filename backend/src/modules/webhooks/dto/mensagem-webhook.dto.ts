@@ -1,9 +1,9 @@
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class MensagemWebhookDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  leadId: string;
+  leadId?: string;
 
   @IsString()
   @IsNotEmpty()

@@ -29,8 +29,25 @@ export class WebhooksController {
   async receberMensagemN8n(
     @Body() dto: MensagemWebhookDto,
   ): Promise<{ resposta: string }> {
+    let leadId = dto.leadId;
+
+    // Se o n8n não enviar leadId (ex: resposta genérica do Telegram como 'confirmado')
+    if (!leadId && dto.telegramChatId) {
+      const lead = await this.prisma.lead.findFirst({
+        where: { telefone: dto.telegramChatId },
+      });
+      if (!lead) {
+        throw new NotFoundException('Lead não encontrado para este Telegram ID');
+      }
+      leadId = lead.id;
+    }
+
+    if (!leadId) {
+      throw new BadRequestException('É necessário enviar leadId ou telegramChatId');
+    }
+
     const resposta = await this.agentService.processarMensagem(
-      dto.leadId,
+      leadId,
       dto.mensagemUsuario,
       dto.origem,
       dto.telegramChatId,
