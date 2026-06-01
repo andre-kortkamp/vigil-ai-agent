@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// ==========================================
+// TABELA 0: EVENTOS
+// ==========================================
+model Event {
+  id              String    @id @default(uuid())
+  nome            String    // Ex: Vigil Summit SP
+  publicoAlvo     String?   // Ex: Manufatura, Saúde, Financeiro
+  dataEvento      DateTime? // Data do evento (essencial para régua D-3, D-1, D+1)
+  
+  leads           Lead[]
+  createdAt       DateTime  @default(now())
+}
+
+// ==========================================
+// TABELA 1: LEADS
+// ==========================================
+model Lead {
+  id              String   @id @default(uuid())
+  eventId         String   // <-- Fundamental para a escala de 10 eventos
+  nome            String
+  email           String   @unique
+  telefone        String?  
+  linkedinUrl     String?
+
+  // Dados de Enriquecimento (Fase 2)
+  cargo           String?
+  empresa         String?
+  tamanhoEmpresa  String?
+  setor           String?  
+  dadosBrutosEnriquecimento Json? // <-- Guarda os "sinais de interesse em segurança" e payload da API
+  
+  // Regras de Negócio Específicas do Case
+  trazAcompanhante Boolean? @default(false)
+  
+  // Controle de Estado do Agente (Funil)
+  status          FunnelStatus @default(CAPTADO)
+  
+  // Compliance (LGPD)
+  lgpdConsent     Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relações
+  event           Event    @relation(fields: [eventId], references: [id])
+  interactions    Interaction[]
+}
+
+// ==========================================
+// TABELA 2: MEMÓRIA DO AGENTE (Interações)
+// ==========================================
+model Interaction {
+  id          String   @id @default(uuid())
+  leadId      String
+  
+  tipo        InteractionType // O que aconteceu?
+  origem      String   // 'n8n_telegram', 'n8n_email', 'agent_claude', 'system'
+  conteudo    String   // O texto da mensagem ou descrição da ação
+  
+  // Metadados flexíveis para o Agente entender o contexto
+  metadata    Json?    // Ex: {"interesse": "demo_lgpd", "tempo_assistido": "40m"}
+  
+  createdAt   DateTime @default(now())
+
+  // Relações
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// ENUMS 
+// ==========================================
+
+enum FunnelStatus {
+  CAPTADO           // Fase 1
+  ENRIQUECIDO       // Fase 2 concluída
+  ENGAGED_PRE       // Fase 3: Recebendo régua de No-show
+  CONFIRMADO        // Fase 3: Confirmou presença
+  PRESENTE          // Dia do Evento: Fez check-in
+  ENGAGED_POS       // Fase 4: Recebendo follow-up
+  REUNIAO_AGENDADA  // Vitória do Agente!
+  NO_SHOW           // Faltou ao evento
+}
+
+enum InteractionType {
+  MENSAGEM_RECEBIDA
+  MENSAGEM_ENVIADA
+  COMPORTAMENTO_EVENTO // Ex: Assistiu palestra, visitou estande
+  MUDANCA_STATUS
+}
