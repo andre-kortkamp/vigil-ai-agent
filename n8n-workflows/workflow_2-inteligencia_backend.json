@@ -1,0 +1,200 @@
+{
+  "name": "workflow_2-inteligencia_backend",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "0e624e9e-a3a8-40be-a189-c54684d14909",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "position": [
+        -128,
+        -16
+      ],
+      "typeVersion": 1,
+      "webhookId": "93a64704-69b9-4b9c-8d06-97297cb8051f",
+      "credentials": {
+        "telegramApi": {
+          "id": "WCCfpRw1V9uJ70DU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message.text }}",
+              "operation": "startsWith",
+              "value2": "/start"
+            }
+          ]
+        }
+      },
+      "id": "a175653d-5d28-42d1-b240-e08407ad4f12",
+      "name": "É Deep Link?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        160,
+        -16
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mensagemProcessada",
+              "value": "Olá! Acabei de me inscrever pelo formulário e acessei meu canal VIP. Pode me dar as boas-vindas com base no meu perfil?"
+            },
+            {
+              "name": "leadId",
+              "value": "={{ $json.message.text.split(' ')[1] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2ccd6cd7-18e0-4907-b630-8816c4ec0e6c",
+      "name": "Traduz Onboarding",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        384,
+        -112
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://vigil-ai-agent.onrender.com/webhooks/n8n",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "leadId",
+              "value": "={{ $json.message.text && $json.message.text.startsWith('/start') ? $json.message.text.split(' ')[1] : '' }}"
+            },
+            {
+              "name": "mensagemUsuario",
+              "value": "={{ $json.mensagemProcessada || $json.message.text }}"
+            },
+            {
+              "name": "origem",
+              "value": "telegram"
+            },
+            {
+              "name": "telegramChatId",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id.toString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a134271e-7645-44ba-afac-eeb0b474df26",
+      "name": "Chama o Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        608,
+        -16
+      ],
+      "typeVersion": 4.1
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.resposta }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "bc5352a0-0297-40b7-a58a-db0b9692611d",
+      "name": "Devolve no Celular",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        832,
+        -16
+      ],
+      "typeVersion": 1.1,
+      "webhookId": "2407fe67-5525-4c46-beeb-c76bf1bd8459",
+      "credentials": {
+        "telegramApi": {
+          "id": "WCCfpRw1V9uJ70DU",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "É Deep Link?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Deep Link?": {
+      "main": [
+        [
+          {
+            "node": "Traduz Onboarding",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chama o Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traduz Onboarding": {
+      "main": [
+        [
+          {
+            "node": "Chama o Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chama o Claude": {
+      "main": [
+        [
+          {
+            "node": "Devolve no Celular",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f2b0081c-8ca0-41d5-867f-c0c4be9e00f2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4a5517ee526ecc360f8730532d976a3c3e198c62bab11c604a8684d9e48ec71a"
+  },
+  "id": "qVb6oSmo7XPKjSU4",
+  "tags": []
+}
