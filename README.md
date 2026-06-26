@@ -11,10 +11,10 @@ Case técnico — AI Engineer, Pareto (2026).
 | Recurso | URL |
 |---|---|
 | **Dashboard (Next.js)** | [https://vigil-ai-agent.vercel.app](https://vigil-ai-agent.vercel.app/) — acesso protegido por senha |
-| **Formulário de Inscrição (n8n)** | [Inscrever lead no Vigil Summit](https://andrekortkamp.app.n8n.cloud/form/37e89384-2085-4e7f-9116-e9af614a6927) |
+| **Formulário de Inscrição (n8n)** | [Inscrever lead no Vigil Summit](https://andre-kortkamp.app.n8n.cloud/form/11b01538-6848-482c-9a1d-d810cf512465) |
 | **API — Swagger/OpenAPI** | [https://vigil-ai-agent.onrender.com/api/docs](https://vigil-ai-agent.onrender.com/api/docs) |
 | **Repositório** | [github.com/andre-kortkamp/vigil-ai-agent](https://github.com/andre-kortkamp/vigil-ai-agent) |
-| **Telegram Bot** | [@VigilSummitBot](https://t.me/VigilSummitBot) |
+| **Telegram Bot** | [@VigilSummit_Bot](https://t.me/VigilSummit_Bot) |
 
 > **Nota:** API em produção no Render: `https://vigil-ai-agent.onrender.com`. Para rodar local: `http://localhost:3000`.
 
@@ -26,11 +26,11 @@ Case técnico — AI Engineer, Pareto (2026).
 
 **1. Inscreva-se como lead:**
 
-Acesse o [formulário de inscrição](https://andrekortkamp.app.n8n.cloud/form/37e89384-2085-4e7f-9116-e9af614a6927) e preencha com dados de teste (ex: Ramon, ramon@pareto.io, CTO, Pareto). O n8n captura os dados e chama `POST /webhooks/leads` automaticamente.
+Acesse o [formulário de inscrição](https://andre-kortkamp.app.n8n.cloud/form/11b01538-6848-482c-9a1d-d810cf512465) e preencha com dados de teste (ex: Ramon, ramon@pareto.io, CTO, Pareto). O n8n captura os dados e chama `POST /webhooks/leads` automaticamente.
 
 **2. Converse com o agente no Telegram:**
 
-Após a inscrição, clique no link do Telegram Bot que aparece na resposta (ou acesse [@VigilSummitBot](https://t.me/VigilSummitBot)). Envie `/start` e depois converse naturalmente — o agente já tem seu perfil enriquecido.
+Após a inscrição, clique no link do Telegram Bot que aparece na resposta (ou acesse [@VigilSummit_Bot](https://t.me/VigilSummit_Bot)). Envie `/start` e depois converse naturalmente — o agente já tem seu perfil enriquecido.
 
 **3. Simule a régua de comunicação via API:**
 
@@ -274,7 +274,7 @@ A Vigil.AI quer replicar o modelo para 10 eventos regionais simultâneos (manufa
 - **Trigger:** Submissão do formulário público (nome, email, cargo, empresa)
 - **Ação:** Envia os dados para `POST /webhooks/leads` do NestJS
 - **Resultado:** Lead criado com status `CAPTADO`, enriquecimento disparado em background
-- **URL pública:** https://andrekortkamp.app.n8n.cloud/form/37e89384-2085-4e7f-9116-e9af614a6927
+- **URL pública:** https://andre-kortkamp.app.n8n.cloud/form/11b01538-6848-482c-9a1d-d810cf512465
 
 ### Workflow 2 — Bridge Telegram ↔ NestJS (Chat Reativo)
 
@@ -282,7 +282,7 @@ A Vigil.AI quer replicar o modelo para 10 eventos regionais simultâneos (manufa
 [Telegram Trigger] → [Extrair leadId/chatId + mensagem] → [HTTP Request: POST /webhooks/n8n] → [Telegram: Enviar resposta]
 ```
 
-- **Trigger:** Mensagem recebida no Telegram Bot (`@VigilSummitBot`)
+- **Trigger:** Mensagem recebida no Telegram Bot (`@VigilSummit_Bot`)
 - **Ação:** Extrai o `telegramChatId` e a mensagem, encaminha para `POST /webhooks/n8n`
 - **Resultado:** O NestJS invoca o Claude com contexto enriquecido + histórico, retorna resposta → n8n envia de volta ao Telegram
 
@@ -487,8 +487,8 @@ Interface web em **Next.js 16** com acesso protegido por senha, conectada direta
 | **Dashboard** | [vigil-ai-agent.vercel.app](https://vigil-ai-agent.vercel.app/) | Senha: `vigil2026` |
 | **Supabase** | Convite enviado para `ramon@pareto.io` |
 | **n8n Cloud** | Convite enviado para `ramon@pareto.io` | Visualização dos 3 workflows |
-| **Formulário** | [Inscrição pública](https://andrekortkamp.app.n8n.cloud/form/37e89384-2085-4e7f-9116-e9af614a6927) |
-| **Telegram Bot** | [@VigilSummitBot](https://t.me/VigilSummitBot) |
+| **Formulário** | [Inscrição pública](https://andre-kortkamp.app.n8n.cloud/form/11b01538-6848-482c-9a1d-d810cf512465) |
+| **Telegram Bot** | [@VigilSummit_Bot](https://t.me/VigilSummit_Bot) |
 | **Swagger/API** | [vigil-ai-agent.onrender.com/api/docs](https://vigil-ai-agent.onrender.com/api/docs) |
 
 
