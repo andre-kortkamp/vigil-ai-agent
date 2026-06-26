@@ -76,7 +76,7 @@ export default async function PaginaDashboard({ searchParams }: Props) {
               </p>
             </div>
             <a
-              href="https://andrekortkamp.app.n8n.cloud/form/37e89384-2085-4e7f-9116-e9af614a6927"
+              href="https://andre-kortkamp.app.n8n.cloud/form/11b01538-6848-482c-9a1d-d810cf512465"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:from-emerald-400 hover:to-emerald-500 transition-all sm:self-end"
@@ -92,9 +92,8 @@ export default async function PaginaDashboard({ searchParams }: Props) {
 
         <div className="flex flex-col gap-6 lg:flex-row">
           <div
-            className={`flex-1 space-y-6 transition-all ${
-              leadIdAtivo ? "lg:pr-4" : ""
-            }`}
+            className={`flex-1 space-y-6 transition-all ${leadIdAtivo ? "lg:pr-4" : ""
+              }`}
           >
             <section>
               <h2 className="mb-4 text-lg font-semibold text-gray-800">
